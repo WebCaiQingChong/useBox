@@ -1,0 +1,20 @@
+{
+  "name": "usebox",
+  "version": "1.0.0",
+  "description": "a hook",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "qingchong",
+  "license": "ISC",
+  "peerDependencies": {
+    "react": ">=17"
+  },
+  "dependencies": {
+    "react": "^17.0.2"
+  },
+  "devDependencies": {
+    "@types/react": "^17.0.34"
+  }
+}
