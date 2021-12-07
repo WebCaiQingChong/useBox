@@ -10,6 +10,7 @@
   "html.validate.styles": false,
   "editor.tabSize": 2,
   "eslint.enable": true,
+  "eslint.useESLintClass": true,
   "eslint.options": {
     "overrideConfigFile": "eslint.config.js",
     "ignorePath": ".eslintignore"

@@ -1,3 +1,4 @@
 export default function Content (props: any) {
-  return <p>{props.content}</p>
+  console.log('content')
+  return <p onClick={props.onClick}>content: {props.content}</p>
 }
