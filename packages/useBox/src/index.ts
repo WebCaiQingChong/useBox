@@ -12,6 +12,7 @@ function objectKeysChange(
   for (const key in nextState) {
     if (!Object.is(prevState[key], nextState[key])) {
       change = true
+      break
     }
   }
 
@@ -64,12 +65,14 @@ function useEvents(
     const cur = config[item]
     if (typeof cur === 'function') {
       const curFunc = config[item]
-
-      const warpFunc = function (context: any, ...args: any) {
+      const warpFunc = function (
+        this: React.MutableRefObject<any>,
+        ...args: any
+      ) {
         // 这里可针对所有的function 进行异常捕获
         let res: any
         try {
-          res = curFunc.call(context, args)
+          res = curFunc.call(this, args)
           if (!(res instanceof Promise)) {
             return res
           }
@@ -108,7 +111,7 @@ function useEvents(
     }
   }
 
-  return { events, loading }
+  return { events: events.current, loading }
 }
 
 /*
