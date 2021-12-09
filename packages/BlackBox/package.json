@@ -1,5 +1,5 @@
 {
-  "name": "usebox",
+  "name": "@qingchong/blackbox",
   "version": "1.0.0",
   "description": "a hook",
   "main": "index.js",
