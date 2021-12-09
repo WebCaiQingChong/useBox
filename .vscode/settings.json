@@ -3,6 +3,7 @@
   "editor.formatOnSave": false,
   "javascript.validate.enable": true,
   "typescript.validate.enable": true,
+  "maxlength": 200,
   "css.validate": false,
   "less.validate": false,
   "scss.validate": false,

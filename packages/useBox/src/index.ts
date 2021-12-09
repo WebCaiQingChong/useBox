@@ -18,41 +18,64 @@ function objectKeysChange(
 
   return change
 }
-function useEvents(
-  config: TypeBox.IAnyObject,
-  setState: React.Dispatch<React.SetStateAction<any>>,
+
+function useEvents<
+  TState extends TypeBox.IAnyObject,
+  TOthers extends TypeBox.IAnyObject,
+  TProps extends TypeBox.IAnyObject,
+>(
+  config: TypeBox.Option<TState, TOthers, TProps>,
+  setState: React.Dispatch<React.SetStateAction<TypeBox.CheckState<TState>>>,
   setError: React.Dispatch<React.SetStateAction<any>>,
   context: React.MutableRefObject<any>,
-) {
+): TypeBox.UseEventsResponse<TOthers> {
   const events = useRef(pureObject())
   const [loading, setL] = useState(() => pureObject())
   const setLoading = useCallback(
-    (nextLoading) => {
-      if (objectKeysChange(loading, nextLoading)) {
-        setL({ ...loading, ...nextLoading })
-      } else {
-        setL(loading)
+    (
+      nextLoading: Partial<{
+        [K in keyof TypeBox.PromiseName<TOthers>]: boolean
+      }>,
+    ) => {
+      if (context.current.__mounted) {
+        context.current.loading = { ...loading, ...nextLoading }
+        if (objectKeysChange(loading, nextLoading)) {
+          setL({ ...loading, ...nextLoading })
+        } else {
+          setL(loading)
+        }
       }
     },
     [loading],
   )
-  function _setState(nextState: any): void {
-    if (isObject(nextState)) {
-      // shallowCompare
-      setState((prevState: TypeBox.IAnyObject) => {
-        if (objectKeysChange(prevState, nextState)) {
-          return { ...prevState, ...nextState }
-        } else {
-          return prevState
-        }
-      })
-    } else {
-      setState(nextState)
+  function _setState(
+    nextState:
+      | Partial<TypeBox.CheckState<TState>>
+      | React.SetStateAction<TypeBox.CheckState<TState>>,
+  ): void {
+    if (context.current.__mounted) {
+      // 挂载后setState才有效
+      if (isObject(nextState)) {
+        // shallowCompare
+        setState((prevState) => {
+          if (objectKeysChange(prevState, nextState)) {
+            return { ...prevState, ...nextState }
+          } else {
+            return prevState
+          }
+        })
+      } else {
+        setState(nextState as React.SetStateAction<TypeBox.CheckState<TState>>)
+      }
     }
   }
 
-  function _setError(err: any) {
-    setError(err)
+  function _setError(
+    err: React.Dispatch<React.SetStateAction<TypeBox.IAnyObject | undefined>>,
+  ) {
+    if (context.current.__mounted) {
+      setError(err)
+    }
   }
 
   context.current.setState = _setState
@@ -64,7 +87,7 @@ function useEvents(
     // 判断是否是function
     const cur = config[item]
     if (typeof cur === 'function') {
-      const curFunc = config[item]
+      const curFunc = <(...args: any[]) => any>config[item]
       const warpFunc = function (
         this: React.MutableRefObject<any>,
         ...args: any
@@ -84,18 +107,24 @@ function useEvents(
           return new Promise((resolve) => {
             setLoading({
               [item]: true,
-            })
+            } as Partial<{
+              [K in keyof TypeBox.PromiseName<TOthers>]: boolean
+            }>)
             res.then(function (result: any) {
               setLoading({
                 [item]: false,
-              })
+              } as Partial<{
+                [K in keyof TypeBox.PromiseName<TOthers>]: boolean
+              }>)
               resolve(result)
             })
           })
         } catch (error) {
           setLoading({
             [item]: false,
-          })
+          } as Partial<{
+            [K in keyof TypeBox.PromiseName<TOthers>]: boolean
+          }>)
           console.log(error)
         }
       }
@@ -114,16 +143,23 @@ function useEvents(
   return { events: events.current, loading }
 }
 
-/*
-@params
-*/
-
-export default function useBox(
-  options: TypeBox.IAnyObject,
-  props: TypeBox.IAnyObject,
-) {
-  const { state: init = {} } = options
-  const [state, setState] = useState(init)
+/**
+ *
+ *
+ * @export
+ * @param {TypeBox.IAnyObject} options
+ * @param {TypeBox.IAnyObject} props
+ * @return {*}
+ */
+export function useBoxWarp<
+  TState extends TypeBox.IAnyObject,
+  TOthers extends TypeBox.IAnyObject,
+  TProps extends TypeBox.IAnyObject,
+>(
+  options: TypeBox.Option<TState, TOthers, TProps>,
+  props: TProps,
+): TypeBox.Response<TState, TOthers> {
+  const [state, setState] = useState(options.state)
   const [error, setError] = useState()
   const context = <React.MutableRefObject<any>>useRef({
     __mounted: false,
@@ -155,10 +191,28 @@ export default function useBox(
 
   // 更新props
   useEffect(() => {
-    if (context.current.__mounted) {
+    if (context.current) {
       context.current.props = props
     }
   })
 
   return { state, events, loading, error }
+}
+
+export default function BlackBox<
+  TState extends TypeBox.IAnyObject,
+  TOthers extends TypeBox.IAnyObject,
+  TProps extends TypeBox.IAnyObject,
+>(
+  init: TypeBox.Option<TState, TOthers, TProps>,
+  renderCom: (
+    data: TypeBox.Response<TState, TOthers>,
+    props?: TProps,
+  ) => JSX.Element,
+) {
+  return function Index(props: TProps) {
+    const data = useBoxWarp(init, props)
+
+    return renderCom(data, props)
+  }
 }

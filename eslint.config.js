@@ -32,7 +32,7 @@ module.exports = {
     browser: true,
     node: true,
     jest: true,
-    es6: true
+    es6: true,
   },
   overrides: [
     {
@@ -43,8 +43,8 @@ module.exports = {
         ecmaVersion: 2020,
         ecmaFeatures: {
           jsx: true,
-          modules: true
-      }
+          modules: true,
+        },
       },
     },
   ],
