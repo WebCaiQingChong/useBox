@@ -1,5 +1,3 @@
-import React from 'packages/useBox/example/node_modules/@types/react'
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 declare namespace TypeBox {
   type IAnyObject = Record<string, any>
@@ -9,7 +7,7 @@ declare namespace TypeBox {
   }
 
   // 实例内置属性【以下属性不对外暴露】
-  interface InnerProperties<TOthers> {
+  interface InnerProperties<TOthers extends IAnyObject> {
     __mounted: boolean
     __init: boolean
     setLoading: (
@@ -18,7 +16,7 @@ declare namespace TypeBox {
   }
 
   // 实例内置并暴露的function
-  interface InstanceMethods<TState> {
+  interface InstanceMethods<TState extends IAnyObject> {
     setState: (
       state:
         | Partial<CheckState<TState>>
@@ -29,11 +27,9 @@ declare namespace TypeBox {
 
   // 实例暴露的属性
   interface InstanceProperty<
-    TState extends IAnyObject,
     TOthers extends IAnyObject,
     TProps extends IAnyObject,
   > {
-    state: CheckState<TState>
     error: any
     loading: Partial<{ [K in keyof PromiseName<TOthers>]: boolean }>
     props: TProps
@@ -43,22 +39,26 @@ declare namespace TypeBox {
     TState extends IAnyObject,
     TOthers extends IAnyObject,
     TProps extends IAnyObject,
-  > = InstanceProperty<TState, TOthers, TProps> &
+  > = InstanceProperty<TOthers, TProps> &
     InstanceMethods<TState> &
     State<TState> &
-    CheckState<TOthers>
+    TOthers
 
-  // 过滤option中的instace内置属性，以免出现覆盖
+  // 过滤option中的instance内置属性，以免出现覆盖
   type FilterInnerProperty<TOthers, InnerProperty> = {
-    [K in keyof TOthers]: TOthers[K] extends InnerProperty ? never : TOthers[K]
+    [K in keyof TOthers]: K extends keyof InnerProperty ? never : TOthers[K]
   }
-  type Option<TState, TOthers, TProps> = State<TState> &
+  type Option<
+    TState extends IAnyObject,
+    TOthers extends IAnyObject,
+    TProps extends IAnyObject,
+  > = State<TState> &
     Partial<LifeTime> &
     FilterInnerProperty<
       TOthers,
       InnerProperties<TOthers> &
         InstanceMethods<TState> &
-        InstanceProperty<TState, TOthers, TProps>
+        InstanceProperty<TOthers, TProps>
     > &
     ThisType<Instance<TState, TOthers, TProps>>
 
@@ -109,8 +109,8 @@ declare namespace TypeBox {
   }
 
   // 定义useEvents的Response
-  type UseEventsResponse<ROthers> = {
-    events: FunctionName<ROthers>
+  type UseEventsResponse<ROthers, TState> = {
+    events: FunctionName<ROthers> & InstanceMethods<TState>
     loading: Partial<{ [K in keyof PromiseName<ROthers>]: boolean }>
   }
 
@@ -118,7 +118,7 @@ declare namespace TypeBox {
   type Response<RState extends IAnyObject, ROthers extends IAnyObject> = {
     state: CheckState<RState>
     error: IAnyObject | undefined
-  } & UseEventsResponse<ROthers>
+  } & UseEventsResponse<ROthers, RState>
 }
 
 export default TypeBox

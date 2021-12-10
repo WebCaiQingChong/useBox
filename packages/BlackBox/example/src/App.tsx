@@ -11,8 +11,9 @@ export default BlackBox(
       content: 'hello world',
     },
     async setName() {
+      const name = await this.sleep()
       this.setState({
-        name: 'haha',
+        name,
       })
     },
     sleep(): Promise<string> {
@@ -27,11 +28,9 @@ export default BlackBox(
         content: '2222',
       })
     },
-    setNick() {
-      this.setState({
-        nick: '',
-      })
-    },
+    // setState() {
+    //   return false
+    // },
   },
   function App(data) {
     const { events, state, loading } = data

@@ -28,7 +28,7 @@ function useEvents<
   setState: React.Dispatch<React.SetStateAction<TypeBox.CheckState<TState>>>,
   setError: React.Dispatch<React.SetStateAction<any>>,
   context: React.MutableRefObject<any>,
-): TypeBox.UseEventsResponse<TOthers> {
+): TypeBox.UseEventsResponse<TOthers, TState> {
   const events = useRef(pureObject())
   const [loading, setL] = useState(() => pureObject())
   const setLoading = useCallback(
