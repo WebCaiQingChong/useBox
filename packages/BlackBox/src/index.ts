@@ -4,6 +4,7 @@ import type TypeBox from './types'
 import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { pureObject, isObject } from './utils'
 
+// 此处并不一定能提升效率
 function objectKeysChange(
   prevState: TypeBox.IAnyObject,
   nextState: TypeBox.IAnyObject,
@@ -29,10 +30,14 @@ function useEvents<
   setError: React.Dispatch<React.SetStateAction<any>>,
   context: React.MutableRefObject<any>,
 ): TypeBox.UseEventsResponse<TOthers, TState> {
+  // 创建events载体
   const events = useRef(pureObject())
+
+  // 创建setLoading,并暴露到外部
   const [loading, setL] = useState(() => pureObject())
   const setLoading = useCallback(
     (
+      // loadingName的取值为异步函数名称
       nextLoading: Partial<{
         [K in keyof TypeBox.PromiseName<TOthers>]: boolean
       }>,
@@ -78,6 +83,7 @@ function useEvents<
     }
   }
 
+  // 将setState,SetError方法挂载在当前作用域上
   context.current.setState = _setState
   context.current.setError = _setError
   events.current.setState = _setState
@@ -96,21 +102,26 @@ function useEvents<
         let res: any
         try {
           res = curFunc.call(this, args)
+          // 判断是promise
+          // 也可使用res.then?进行判断
           if (!(res instanceof Promise)) {
             return res
           }
         } catch (error) {
+          // 此处可以将统一的errorHandle传入进行处理
           console.log(error)
         }
 
         try {
           return new Promise((resolve) => {
+            // 异步发起之前将其loading设置为true
             setLoading({
               [item]: true,
             } as Partial<{
               [K in keyof TypeBox.PromiseName<TOthers>]: boolean
             }>)
             res.then(function (result: any) {
+              // 异步结束后设置为false
               setLoading({
                 [item]: false,
               } as Partial<{
@@ -120,6 +131,7 @@ function useEvents<
             })
           })
         } catch (error) {
+          // 异步异常后设置为false
           setLoading({
             [item]: false,
           } as Partial<{
@@ -129,6 +141,7 @@ function useEvents<
         }
       }
 
+      // 将function的作用域绑定到context以及events上
       events.current[item] = warpFunc.bind(context.current)
       context.current[item] = warpFunc.bind(context.current)
     } else {
